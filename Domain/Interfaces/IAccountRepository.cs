@@ -1,16 +1,15 @@
 ﻿using Domain.Common.Exceptions;
+using Domain.Entities;
+
 namespace Domain.Interfaces
 {
     public interface IAccountRepository
     {
-        /// <summary>
-        /// Creates a new Account for the Username Given and returns the Account ID if successful, or null if an error occurs.
-        /// </summary>
-        /// <param name="name">Name to be created with</param>
-        /// <param name="cancellationToken"></param>
         /// <exception cref="AccountAlreadyExistsException">Thrown when an account with the same name already exists.</exception>
-        /// <exception cref="Exception">Thrown when an unexpected error occurs.</exception>
-        /// <returns>Account Id or Null</returns>
-        Task<int?> CreateAccountAsync(string name,CancellationToken cancellationToken);
+        Task<int?> CreateAccountAsync(string name, CancellationToken cancellationToken);
+        Task<IEnumerable<Account>> GetAllAccountsAsync(CancellationToken cancellationToken);
+        Task<Account?> GetAccountByIdAsync(int id, CancellationToken cancellationToken);
+        Task<bool> UpdateAccountAsync(int id, string name, bool isActive, CancellationToken cancellationToken);
+        Task<bool> DeleteAccountAsync(int id, CancellationToken cancellationToken);
     }
 }

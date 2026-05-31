@@ -1,0 +1,133 @@
+@model AppLoggerDynamic.ViewModels.AlertFormViewModel
+@{
+    ViewData["Title"] = "New Alert";
+    ViewData["Nav"] = "alerts";
+}
+
+<div class="page-header">
+    <h1><i class="bi bi-bell-plus me-2 text-primary"></i>New Alert</h1>
+    <a href="/alerts?serviceId=@Model.ServiceId" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<div class="page-body">
+    <div class="card border-0 shadow-sm" style="max-width:640px;">
+        <div class="card-header bg-white border-bottom fw-semibold text-secondary d-flex align-items-center gap-2">
+            <i class="bi bi-sliders text-primary"></i> Alert configuration
+        </div>
+        <div class="card-body p-4">
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger d-flex align-items-start gap-2 py-2 small">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+                    <div>
+                        @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <div>@err.ErrorMessage</div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <form method="post" action="/alerts/create">
+                @Html.AntiForgeryToken()
+
+                <!-- Service -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted ls-wide">Service</label>
+                    <select name="ServiceId" class="form-select shadow-none">
+                        @foreach (var svc in Model.Services)
+                        {
+                            <option value="@svc.Id" @(svc.Id == Model.ServiceId ? "selected" : "")>
+                                @svc.Name (@svc.Environment)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Alert name -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Alert name</label>
+                    <input type="text" name="Name" value="@Model.Name" class="form-control shadow-none"
+                           placeholder="e.g. High error rate" required />
+                </div>
+
+                <!-- Level + Condition -->
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Level</label>
+                        <select name="Level" class="form-select shadow-none">
+                            <option value="ERROR" @(Model.Level == "ERROR" ? "selected" : "")>
+                                🔴 ERROR
+                            </option>
+                            <option value="WARN"  @(Model.Level == "WARN"  ? "selected" : "")>
+                                🟠 WARN
+                            </option>
+                            <option value="INFO"  @(Model.Level == "INFO"  ? "selected" : "")>
+                                🔵 INFO
+                            </option>
+                            <option value="DEBUG" @(Model.Level == "DEBUG" ? "selected" : "")>
+                                ⚪ DEBUG
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Condition</label>
+                        <select name="Condition" class="form-select shadow-none">
+                            <option value="GreaterThan" @(Model.Condition == "GreaterThan" ? "selected" : "")>
+                                &gt; GreaterThan
+                            </option>
+                            <option value="LessThan"    @(Model.Condition == "LessThan"    ? "selected" : "")>
+                                &lt; LessThan
+                            </option>
+                            <option value="Equals"      @(Model.Condition == "Equals"      ? "selected" : "")>
+                                = Equals
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Threshold + Window -->
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Threshold</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-hash text-muted"></i>
+                            </span>
+                            <input type="number" name="ThresholdValue" value="@Model.ThresholdValue"
+                                   class="form-control border-start-0 shadow-none" min="1" required />
+                        </div>
+                        <div class="form-text">Number of occurrences</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Window</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-clock text-muted"></i>
+                            </span>
+                            <input type="number" name="WindowSeconds"
+                                   value="@(Model.WindowSeconds == 0 ? 60 : Model.WindowSeconds)"
+                                   class="form-control border-start-0 shadow-none" min="10" required />
+                            <span class="input-group-text bg-light text-muted">sec</span>
+                        </div>
+                        <div class="form-text">Time window to evaluate</div>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-check-lg me-1"></i> Create alert
+                    </button>
+                    <a href="/alerts?serviceId=@Model.ServiceId" class="btn btn-outline-secondary px-4">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

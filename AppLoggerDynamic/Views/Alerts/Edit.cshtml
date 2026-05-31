@@ -1,0 +1,86 @@
+@model AppLoggerDynamic.ViewModels.AlertFormViewModel
+@{
+    ViewData["Title"] = "Edit Alert";
+    ViewData["Nav"] = "alerts";
+}
+
+<div class="page-header">
+    <h1><i class="bi bi-bell me-2 text-primary"></i>Edit Alert</h1>
+    <a href="/alerts?serviceId=@Model.ServiceId" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<div class="page-body">
+    <div class="card" style="max-width:600px;">
+        <div class="card-header">Alert configuration</div>
+        <div class="card-body p-4">
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger small">
+                    @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <div>@err.ErrorMessage</div>
+                    }
+                </div>
+            }
+
+            <form method="post" action="/alerts/edit/@Model.Id">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ServiceId" value="@Model.ServiceId" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Alert name</label>
+                    <input type="text" name="Name" value="@Model.Name" class="form-control" required />
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-medium">Level</label>
+                        <select name="Level" class="form-select">
+                            <option value="ERROR"  @(Model.Level == "ERROR"  ? "selected" : "")>ERROR</option>
+                            <option value="WARN"   @(Model.Level == "WARN"   ? "selected" : "")>WARN</option>
+                            <option value="INFO"   @(Model.Level == "INFO"   ? "selected" : "")>INFO</option>
+                            <option value="DEBUG"  @(Model.Level == "DEBUG"  ? "selected" : "")>DEBUG</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-medium">Condition</label>
+                        <select name="Condition" class="form-select">
+                            <option value="GreaterThan" @(Model.Condition == "GreaterThan" ? "selected" : "")>GreaterThan</option>
+                            <option value="LessThan"    @(Model.Condition == "LessThan"    ? "selected" : "")>LessThan</option>
+                            <option value="Equals"      @(Model.Condition == "Equals"      ? "selected" : "")>Equals</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-medium">Threshold</label>
+                        <input type="number" name="ThresholdValue" value="@Model.ThresholdValue"
+                               class="form-control" min="1" required />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-medium">Window (seconds)</label>
+                        <input type="number" name="WindowSeconds" value="@Model.WindowSeconds"
+                               class="form-control" min="10" required />
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="IsActive" value="true"
+                               id="isActiveCheck" @(Model.IsActive ? "checked" : "") />
+                        <label class="form-check-label fw-medium" for="isActiveCheck">Active</label>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                    <a href="/alerts?serviceId=@Model.ServiceId" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

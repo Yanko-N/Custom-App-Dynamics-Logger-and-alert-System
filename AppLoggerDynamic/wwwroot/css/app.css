@@ -1,0 +1,312 @@
+:root {
+    --sidebar-bg: #0f172a;
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-text: rgba(203, 213, 225, 0.85);
+    --sidebar-text-active: #fff;
+    --sidebar-active-bg: rgba(59, 130, 246, 0.15);
+    --sidebar-active-border: #3b82f6;
+    --sidebar-hover-bg: rgba(255, 255, 255, 0.06);
+    --accent: #3b82f6;
+    --content-bg: #f1f5f9;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Sidebar ── */
+.app-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.sidebar-brand {
+    padding: 1.25rem 1.25rem 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .02em;
+    border-bottom: 1px solid var(--sidebar-border);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.sidebar-brand .brand-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+}
+
+.sidebar-section {
+    padding: .75rem 1rem .25rem;
+    font-size: .65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: rgba(148, 163, 184, 0.6);
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+}
+
+.sidebar-nav li a {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .6rem 1.25rem;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    font-size: .875rem;
+    transition: background .15s, color .15s;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav li a:hover {
+    background: var(--sidebar-hover-bg);
+    color: var(--sidebar-text-active);
+}
+
+.sidebar-nav li a.active {
+    background: var(--sidebar-active-bg);
+    color: var(--sidebar-text-active);
+    border-left-color: var(--sidebar-active-border);
+    font-weight: 500;
+}
+
+.sidebar-nav li a i {
+    font-size: 1rem;
+    opacity: .85;
+}
+
+.sidebar-footer {
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--sidebar-border);
+}
+
+/* ── Main content ── */
+.main-content {
+    flex: 1;
+    background: var(--content-bg);
+    overflow-y: auto;
+}
+
+.page-header {
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.page-header h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+}
+
+.page-body {
+    padding: 1.5rem 1.75rem;
+}
+
+/* ── Cards ── */
+.card {
+    border: 1px solid #e2e8f0;
+    border-radius: .5rem;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+}
+
+.card-header {
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: .875rem 1.25rem;
+    font-weight: 600;
+    font-size: .9rem;
+    color: #334155;
+    border-radius: .5rem .5rem 0 0 !important;
+}
+
+/* ── Log level badges ── */
+.badge-level {
+    display: inline-block;
+    padding: .2em .55em;
+    border-radius: .25rem;
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.badge-error  { background: #fee2e2; color: #dc2626; }
+.badge-warn   { background: #ffedd5; color: #ea580c; }
+.badge-info   { background: #dbeafe; color: #2563eb; }
+.badge-debug  { background: #f1f5f9; color: #64748b; }
+.badge-fatal  { background: #fce7f3; color: #be185d; }
+
+/* ── Service cards ── */
+.service-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: .5rem;
+    padding: 1.25rem;
+    transition: box-shadow .15s, border-color .15s;
+    height: 100%;
+}
+
+.service-card:hover {
+    border-color: #94a3b8;
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+
+.service-card .env-badge {
+    display: inline-block;
+    padding: .15em .5em;
+    border-radius: .2rem;
+    font-size: .7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.env-badge.env-production { background: #dcfce7; color: #166534; }
+.env-badge.env-staging    { background: #fef9c3; color: #854d0e; }
+.env-badge.env-development, .env-badge.env-dev { background: #dbeafe; color: #1e40af; }
+.env-badge.env-default    { background: #f1f5f9; color: #475569; }
+
+/* ── Log table ── */
+.log-table td {
+    vertical-align: top;
+    font-size: .8rem;
+    border-color: #f1f5f9;
+}
+
+.log-table thead th {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    border-color: #e2e8f0;
+    background: #f8fafc;
+}
+
+.log-message {
+    max-width: 500px;
+    word-break: break-word;
+}
+
+.stack-toggle {
+    font-size: .7rem;
+    color: #64748b;
+    cursor: pointer;
+    text-decoration: underline dotted;
+}
+
+.stack-trace {
+    background: #0f172a;
+    color: #94a3b8;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: .7rem;
+    padding: .75rem;
+    border-radius: .25rem;
+    margin-top: .5rem;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* ── Alert table ── */
+.alert-condition {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: .78rem;
+    background: #f8fafc;
+    padding: .15em .4em;
+    border-radius: .2rem;
+    border: 1px solid #e2e8f0;
+}
+
+/* ── Form controls ── */
+.filter-bar {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: .5rem;
+    padding: .875rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+/* ── Login page ── */
+.login-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-card {
+    background: #fff;
+    border-radius: .75rem;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 40px rgba(0,0,0,.3);
+}
+
+.login-logo {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1.75rem;
+}
+
+.login-logo .logo-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #3b82f6;
+}
+
+.login-logo span {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* ── Pagination ── */
+.pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 1.25rem;
+    border-top: 1px solid #e2e8f0;
+    font-size: .8rem;
+    color: #64748b;
+}
+
+/* ── Toggle switch ── */
+.form-switch .form-check-input {
+    width: 2em;
+    cursor: pointer;
+}

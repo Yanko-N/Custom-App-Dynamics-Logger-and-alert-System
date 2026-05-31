@@ -1,0 +1,116 @@
+@model AppLoggerDynamic.ViewModels.AlertsViewModel
+@{
+    ViewData["Title"] = "Alerts";
+    ViewData["Nav"] = "alerts";
+}
+
+<div class="page-header">
+    <h1><i class="bi bi-bell me-2 text-primary"></i>Alerts</h1>
+    @if (Model.SelectedServiceId > 0)
+    {
+        <a href="/alerts/create?serviceId=@Model.SelectedServiceId" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>New Alert
+        </a>
+    }
+</div>
+
+<div class="page-body">
+
+    <!-- Service selector -->
+    <div class="filter-bar d-flex align-items-end gap-2">
+        <form method="get" action="/alerts">
+            <div class="d-flex gap-2 align-items-end">
+                <div>
+                    <label class="form-label small fw-medium mb-1">Service</label>
+                    <select name="serviceId" class="form-select form-select-sm" style="min-width:200px;" onchange="this.form.submit()">
+                        @foreach (var svc in Model.Services)
+                        {
+                            <option value="@svc.Id" @(svc.Id == Model.SelectedServiceId ? "selected" : "")>
+                                @svc.Name (@svc.Environment)
+                            </option>
+                        }
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Go</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        @if (!Model.Alerts.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-bell-slash display-5"></i>
+                <p class="mt-2">No alerts configured for this service.</p>
+                @if (Model.SelectedServiceId > 0)
+                {
+                    <a href="/alerts/create?serviceId=@Model.SelectedServiceId" class="btn btn-sm btn-primary">
+                        Create your first alert
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Level</th>
+                            <th>Condition</th>
+                            <th>Threshold</th>
+                            <th>Window</th>
+                            <th>Active</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var alert in Model.Alerts)
+                        {
+                            var lvl = alert.Level?.ToUpper() ?? "";
+                            var badgeClass = lvl switch
+                            {
+                                "ERROR" => "badge-error",
+                                "WARN" or "WARNING" => "badge-warn",
+                                "INFO" => "badge-info",
+                                _ => "badge-debug"
+                            };
+                            <tr>
+                                <td class="fw-medium">@alert.Name</td>
+                                <td><span class="badge-level @badgeClass">@alert.Level</span></td>
+                                <td><span class="alert-condition">@alert.Condition</span></td>
+                                <td>@alert.ThresholdValue</td>
+                                <td>@alert.WindowSeconds s</td>
+                                <td>
+                                    @if (alert.IsActive)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Inactive</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a href="/alerts/edit/@alert.Id" class="btn btn-sm btn-outline-secondary me-1">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="post" action="/alerts/delete/@alert.Id" class="d-inline"
+                                          onsubmit="return confirm('Delete this alert?')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="serviceId" value="@alert.ServiceId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+</div>

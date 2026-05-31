@@ -1,11 +1,45 @@
 ﻿using Domain.Common;
 using Domain.Common.Enums;
+using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AppLoggerDynamic.Controllers
 {
     public class ApiBaseController : ControllerBase
     {
+        protected async Task<(int AccountId, IActionResult? Error)> ResolveAccountFromApiKeyHeader(
+            IApiKeyRepository apiKeyRepository,
+            CancellationToken cancellationToken)
+        {
+            var rawKey = Request.Headers["X-Api-Key"].FirstOrDefault();
+
+            if (string.IsNullOrWhiteSpace(rawKey))
+            {
+                return (0, Unauthorized(new ProblemDetails
+                {
+                    Title = "Unauthorized",
+                    Status = 401,
+                    Detail = "Missing X-Api-Key header.",
+                    Extensions = { { "code", "ApiKey.Missing" } }
+                }));
+            }
+
+            var apiKey = await apiKeyRepository.ValidateApiKeyAsync(rawKey, cancellationToken);
+
+            if (apiKey == null)
+            {
+                return (0, Unauthorized(new ProblemDetails
+                {
+                    Title = "Unauthorized",
+                    Status = 401,
+                    Detail = "The provided API key is invalid or expired.",
+                    Extensions = { { "code", "ApiKey.Invalid" } }
+                }));
+            }
+
+            return (apiKey.AccountId, null);
+        }
+
         protected IActionResult HandleFailure<T>(Result<T> result)
         {
             if (result.IsSuccess)

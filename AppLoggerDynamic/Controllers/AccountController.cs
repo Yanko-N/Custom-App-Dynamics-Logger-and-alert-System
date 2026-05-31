@@ -1,7 +1,8 @@
-﻿using Application.Command;
+using Application.Command;
 using Application.Queries;
 using Application.Interfaces;
 using Domain.Common;
+using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using static AppLoggerDynamic.Dtos.AccountDtos;
 
@@ -18,38 +19,48 @@ namespace AppLoggerDynamic.Controllers
             _mediator = mediator;
         }
 
-        // GET: api/Account
+        // GET: api/account
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
-            // Using a Query for fetching data
-            var query = new GetAccountsQuery();
-            Result<IEnumerable<AccountResponse>> result = await _mediator.Send(query, cancellationToken);
+            Result<IEnumerable<Account>> result = await _mediator.Send(new GetAccountsQuery(), cancellationToken);
 
             if (!result.IsSuccess)
             {
                 return HandleFailure(result);
             }
 
-            return Ok(result.Value);
+            return Ok(result.Value.Select(a => new AccountResponse
+            {
+                Id = a.Id,
+                Name = a.Name,
+                IsActive = a.IsActive,
+                CreatedAt = a.CreatedAt
+            }));
         }
 
-        // GET api/Account/5
+        // GET api/account/5
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id, CancellationToken cancellationToken)
         {
-            var query = new GetAccountByIdQuery(id);
-            Result<AccountResponse> result = await _mediator.Send(query, cancellationToken);
+            Result<Account> result = await _mediator.Send(new GetAccountByIdQuery(id), cancellationToken);
 
             if (!result.IsSuccess)
             {
                 return HandleFailure(result);
             }
 
-            return Ok(result.Value);
+            var a = result.Value;
+            return Ok(new AccountResponse
+            {
+                Id = a.Id,
+                Name = a.Name,
+                IsActive = a.IsActive,
+                CreatedAt = a.CreatedAt
+            });
         }
 
-        // POST api/Account
+        // POST api/account
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] CreateAccountRequest request, CancellationToken cancellationToken)
         {
@@ -68,7 +79,7 @@ namespace AppLoggerDynamic.Controllers
             });
         }
 
-        // PUT api/Account/5
+        // PUT api/account/5
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody] UpdateAccountRequest request, CancellationToken cancellationToken)
         {
@@ -86,22 +97,21 @@ namespace AppLoggerDynamic.Controllers
                 return HandleFailure(result);
             }
 
-            return NoContent(); 
+            return NoContent();
         }
 
-        // DELETE api/Account/5
+        // DELETE api/account/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            var command = new DeleteAccountCommand(id);
-            Result<bool> result = await _mediator.Send(command, cancellationToken);
+            Result<bool> result = await _mediator.Send(new DeleteAccountCommand(id), cancellationToken);
 
             if (!result.IsSuccess)
             {
                 return HandleFailure(result);
             }
 
-            return NoContent(); // 204 No Content for successful deletion
+            return NoContent();
         }
     }
 }

@@ -43,7 +43,7 @@ namespace Application.Queries
 
             var logs = await _logsRepository.GetLogsAsync(request.ApiKey, request.Skip, request.Take);
 
-            if (logs is null)
+            if (logs == null)
             {
                 _logger.LogWarning("No logs found for ApiKey {ApiKey}", request.ApiKey);
                 return Result.Failure<PaginatedList<CustomLog>>(CustomLogsErrors.NotFound);
