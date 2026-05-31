@@ -1,8 +1,8 @@
 ﻿using Application.Command;
+using Application.Queries;
 using Application.Interfaces;
 using Domain.Common;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Identity.Client;
 using static AppLoggerDynamic.Dtos.AccountDtos;
 
 namespace AppLoggerDynamic.Controllers
@@ -18,54 +18,90 @@ namespace AppLoggerDynamic.Controllers
             _mediator = mediator;
         }
 
-        // GET: api/<AccountController>
+        // GET: api/Account
         [HttpGet]
-        public IEnumerable<string> Get()
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
-            return new string[] { "value1", "value2" };
-        }
-
-        // GET api/<AccountController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/<AccountController>
-        [HttpPost]
-        public async Task<IActionResult> Post([FromBody] CreateAccountRequest request)
-        {
-            var command = new CreateAccountCommand
-            {
-                Name = request.Name
-            };
-
-            Result<int> result = await _mediator.Send(command);
+            // Using a Query for fetching data
+            var query = new GetAccountsQuery();
+            Result<IEnumerable<AccountResponse>> result = await _mediator.Send(query, cancellationToken);
 
             if (!result.IsSuccess)
             {
-               return HandleFailure(result);
+                return HandleFailure(result);
             }
 
-            return CreatedAtAction(nameof(Get), new CreateAccountResponse
+            return Ok(result.Value);
+        }
+
+        // GET api/Account/5
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id, CancellationToken cancellationToken)
+        {
+            var query = new GetAccountByIdQuery(id);
+            Result<AccountResponse> result = await _mediator.Send(query, cancellationToken);
+
+            if (!result.IsSuccess)
+            {
+                return HandleFailure(result);
+            }
+
+            return Ok(result.Value);
+        }
+
+        // POST api/Account
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] CreateAccountRequest request, CancellationToken cancellationToken)
+        {
+            var command = new CreateAccountCommand { Name = request.Name };
+            Result<int> result = await _mediator.Send(command, cancellationToken);
+
+            if (!result.IsSuccess)
+            {
+                return HandleFailure(result);
+            }
+
+            return CreatedAtAction(nameof(Get), new { id = result.Value }, new CreateAccountResponse
             {
                 Id = result.Value,
                 Name = request.Name
             });
-
         }
 
-        // PUT api/<AccountController>/5
+        // PUT api/Account/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public async Task<IActionResult> Put(int id, [FromBody] UpdateAccountRequest request, CancellationToken cancellationToken)
         {
+            var command = new UpdateAccountCommand
+            {
+                Id = id,
+                Name = request.Name,
+                IsActive = request.IsActive
+            };
+
+            Result<bool> result = await _mediator.Send(command, cancellationToken);
+
+            if (!result.IsSuccess)
+            {
+                return HandleFailure(result);
+            }
+
+            return NoContent(); 
         }
 
-        // DELETE api/<AccountController>/5
+        // DELETE api/Account/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
+            var command = new DeleteAccountCommand(id);
+            Result<bool> result = await _mediator.Send(command, cancellationToken);
+
+            if (!result.IsSuccess)
+            {
+                return HandleFailure(result);
+            }
+
+            return NoContent(); // 204 No Content for successful deletion
         }
     }
 }
