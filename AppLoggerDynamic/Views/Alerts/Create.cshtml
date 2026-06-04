@@ -1,11 +1,11 @@
 @model AppLoggerDynamic.ViewModels.AlertFormViewModel
 @{
-    ViewData["Title"] = "New Alert";
+    ViewData["Title"] = "New Health Rule";
     ViewData["Nav"] = "alerts";
 }
 
 <div class="page-header">
-    <h1><i class="bi bi-bell-plus me-2 text-primary"></i>New Alert</h1>
+    <h1><i class="bi bi-shield-plus me-2 text-primary"></i>New Health Rule</h1>
     <a href="/alerts?serviceId=@Model.ServiceId" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i>Back
     </a>
@@ -14,7 +14,7 @@
 <div class="page-body">
     <div class="card border-0 shadow-sm" style="max-width:640px;">
         <div class="card-header bg-white border-bottom fw-semibold text-secondary d-flex align-items-center gap-2">
-            <i class="bi bi-sliders text-primary"></i> Alert configuration
+            <i class="bi bi-sliders text-primary"></i> Rule configuration
         </div>
         <div class="card-body p-4">
 
@@ -34,9 +34,8 @@
             <form method="post" action="/alerts/create">
                 @Html.AntiForgeryToken()
 
-                <!-- Service -->
                 <div class="mb-4">
-                    <label class="form-label fw-semibold small text-uppercase text-muted ls-wide">Service</label>
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Service</label>
                     <select name="ServiceId" class="form-select shadow-none">
                         @foreach (var svc in Model.Services)
                         {
@@ -47,87 +46,113 @@
                     </select>
                 </div>
 
-                <!-- Alert name -->
                 <div class="mb-4">
-                    <label class="form-label fw-semibold small text-uppercase text-muted">Alert name</label>
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Rule name</label>
                     <input type="text" name="Name" value="@Model.Name" class="form-control shadow-none"
                            placeholder="e.g. High error rate" required />
                 </div>
 
-                <!-- Level + Condition -->
                 <div class="row g-3 mb-4">
                     <div class="col-sm-6">
-                        <label class="form-label fw-semibold small text-uppercase text-muted">Level</label>
-                        <select name="Level" class="form-select shadow-none">
-                            <option value="ERROR" @(Model.Level == "ERROR" ? "selected" : "")>
-                                🔴 ERROR
-                            </option>
-                            <option value="WARN"  @(Model.Level == "WARN"  ? "selected" : "")>
-                                🟠 WARN
-                            </option>
-                            <option value="INFO"  @(Model.Level == "INFO"  ? "selected" : "")>
-                                🔵 INFO
-                            </option>
-                            <option value="DEBUG" @(Model.Level == "DEBUG" ? "selected" : "")>
-                                ⚪ DEBUG
-                            </option>
+                        <label class="form-label fw-semibold small text-uppercase text-muted">Log level to monitor</label>
+                        <select name="Level" class="form-select shadow-none" id="sel-level">
+                            <option value="ERROR" @(Model.Level == "ERROR" ? "selected" : "")>🔴 ERROR</option>
+                            <option value="WARN"  @(Model.Level == "WARN"  ? "selected" : "")>🟠 WARN</option>
+                            <option value="INFO"  @(Model.Level == "INFO"  ? "selected" : "")>🔵 INFO</option>
+                            <option value="DEBUG" @(Model.Level == "DEBUG" ? "selected" : "")>⚪ DEBUG</option>
+                            <option value="FATAL" @(Model.Level == "FATAL" ? "selected" : "")>💀 FATAL</option>
                         </select>
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold small text-uppercase text-muted">Condition</label>
-                        <select name="Condition" class="form-select shadow-none">
-                            <option value="GreaterThan" @(Model.Condition == "GreaterThan" ? "selected" : "")>
-                                &gt; GreaterThan
-                            </option>
-                            <option value="LessThan"    @(Model.Condition == "LessThan"    ? "selected" : "")>
-                                &lt; LessThan
-                            </option>
-                            <option value="Equals"      @(Model.Condition == "Equals"      ? "selected" : "")>
-                                = Equals
-                            </option>
+                        <select name="Condition" class="form-select shadow-none" id="sel-condition">
+                            <option value="GreaterThan" @(Model.Condition == "GreaterThan" ? "selected" : "")>&gt; GreaterThan</option>
+                            <option value="LessThan"    @(Model.Condition == "LessThan"    ? "selected" : "")>&lt; LessThan</option>
+                            <option value="Equals"      @(Model.Condition == "Equals"      ? "selected" : "")>= Equals</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Threshold + Window -->
                 <div class="row g-3 mb-4">
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold small text-uppercase text-muted">Threshold</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0">
-                                <i class="bi bi-hash text-muted"></i>
-                            </span>
-                            <input type="number" name="ThresholdValue" value="@Model.ThresholdValue"
-                                   class="form-control border-start-0 shadow-none" min="1" required />
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-hash text-muted"></i></span>
+                            <input type="number" name="ThresholdValue" id="inp-threshold"
+                                   value="@Model.ThresholdValue" class="form-control border-start-0 shadow-none" min="1" required />
                         </div>
                         <div class="form-text">Number of occurrences</div>
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label fw-semibold small text-uppercase text-muted">Window</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0">
-                                <i class="bi bi-clock text-muted"></i>
-                            </span>
-                            <input type="number" name="WindowSeconds"
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-clock text-muted"></i></span>
+                            <input type="number" name="WindowSeconds" id="inp-window"
                                    value="@(Model.WindowSeconds == 0 ? 60 : Model.WindowSeconds)"
                                    class="form-control border-start-0 shadow-none" min="10" required />
                             <span class="input-group-text bg-light text-muted">sec</span>
                         </div>
-                        <div class="form-text">Time window to evaluate</div>
+                        <div class="form-text">Sliding time window</div>
                     </div>
                 </div>
 
-                <hr class="my-4" />
+                <!-- Message pattern -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">
+                        Message pattern <span class="text-muted fw-normal">(optional)</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-muted small font-monospace">%</span>
+                        <input type="text" name="MessagePattern" id="inp-pattern"
+                               value="@Model.MessagePattern" class="form-control border-start-0 border-end-0 shadow-none font-monospace"
+                               placeholder="OutOfMemoryException" />
+                        <span class="input-group-text bg-light border-start-0 text-muted small font-monospace">%</span>
+                    </div>
+                    <div class="form-text">Only count logs where message <strong>contains</strong> this text. Leave empty to match all messages of the selected level.</div>
+                </div>
 
+                <!-- Live rule preview -->
+                <div class="rounded p-3 mb-4 border" style="background:#f8fafc;">
+                    <div class="small fw-semibold text-uppercase text-muted mb-2">
+                        <i class="bi bi-eye me-1"></i>Rule preview
+                    </div>
+                    <div id="rule-preview" class="small" style="color:#334155;font-family:monospace;min-height:1.4em;"></div>
+                </div>
+
+                <hr class="my-3" />
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary px-4">
-                        <i class="bi bi-check-lg me-1"></i> Create alert
+                        <i class="bi bi-check-lg me-1"></i> Create rule
                     </button>
-                    <a href="/alerts?serviceId=@Model.ServiceId" class="btn btn-outline-secondary px-4">
-                        Cancel
-                    </a>
+                    <a href="/alerts?serviceId=@Model.ServiceId" class="btn btn-outline-secondary px-4">Cancel</a>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+const levelColors = { ERROR:'#dc2626', FATAL:'#be185d', WARN:'#ea580c', INFO:'#2563eb', DEBUG:'#64748b' };
+function updatePreview() {
+    const level  = document.getElementById('sel-level')?.value ?? 'ERROR';
+    const cond   = document.getElementById('sel-condition')?.value ?? 'GreaterThan';
+    const thresh = document.getElementById('inp-threshold')?.value ?? '5';
+    const win    = document.getElementById('inp-window')?.value ?? '60';
+    const name   = document.querySelector('[name=Name]')?.value?.trim();
+    const sym    = { GreaterThan:'>', LessThan:'<', Equals:'=' }[cond] ?? '?';
+    const col     = levelColors[level] ?? '#334155';
+    const lbl     = name ? `"${name}"` : 'This rule';
+    const pattern = document.getElementById('inp-pattern')?.value?.trim();
+    const patPart = pattern ? ` matching <code>%${pattern}%</code>` : '';
+    document.getElementById('rule-preview').innerHTML =
+        `${lbl} fires when <span style="color:${col};font-weight:700;background:${col}18;padding:1px 5px;border-radius:3px;">${level}</span> ` +
+        `log count${patPart} is <strong>${sym}&nbsp;${thresh}</strong> within a <strong>${win}s</strong> window.`;
+}
+['sel-level','sel-condition','inp-threshold','inp-window','inp-pattern'].forEach(id =>
+    document.getElementById(id)?.addEventListener('change', updatePreview));
+['inp-pattern'].forEach(id => document.getElementById(id)?.addEventListener('input', updatePreview));
+document.querySelector('[name=Name]')?.addEventListener('input', updatePreview);
+updatePreview();
+</script>
+}

@@ -1,6 +1,8 @@
 
+using Application.BackgroundServices;
 using Application.Command;
 using Application.Extensions;
+using Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Persistence;
@@ -51,6 +53,15 @@ namespace AppLoggerDynamic
 
             builder.Services.AddRepositories();
             builder.Services.AddCustomMediator(typeof(CreateAccountCommand).Assembly);
+
+            builder.Services.AddHttpClient("AlertHook", c =>
+            {
+                c.Timeout = TimeSpan.FromSeconds(10);
+            });
+
+            // Register alert evaluation queue and background service
+            builder.Services.AddSingleton<IAlertEvaluationQueue, AlertEvaluationQueue>();
+            builder.Services.AddHostedService<AlertEvaluationBackgroundService>();
 
             var app = builder.Build();
 

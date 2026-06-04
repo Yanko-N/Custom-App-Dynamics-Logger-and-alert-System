@@ -29,6 +29,9 @@ namespace Domain.Entities
 
         public int WindowSeconds { get; set; } = 60;
 
+        [StringLength(200)]
+        public string? MessagePattern { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         // Navigation

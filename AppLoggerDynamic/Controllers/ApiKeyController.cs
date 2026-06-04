@@ -39,7 +39,7 @@ namespace AppLoggerDynamic.Controllers
                 CreatedAt = key.CreatedAt,
                 ExpiresAt = key.ExpiresAt,
                 LastUsedAt = key.LastUsedAt,
-                KeyHashPreview = key.KeyHash[..8] + "..."
+                KeyHashPreview = key.KeyHash
             }));
         }
 

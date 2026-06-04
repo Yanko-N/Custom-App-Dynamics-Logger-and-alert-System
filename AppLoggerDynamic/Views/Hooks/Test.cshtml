@@ -1,0 +1,174 @@
+@model Domain.Entities.Hook
+@{
+    ViewData["Title"] = "Test Webhook";
+    ViewData["Nav"] = "hooks";
+
+    var defaultPayload = System.Text.Json.JsonSerializer.Serialize(new
+    {
+        @event        = "test",
+        alertId       = 0,
+        alertName     = "Test Ping",
+        serviceId     = Model.ServiceId,
+        level         = "ERROR",
+        condition     = "GreaterThan",
+        threshold     = 5,
+        currentCount  = 6,
+        windowSeconds = 60,
+        messagePattern = (string?)null,
+        triggerId     = 0,
+        firedAt       = DateTime.UtcNow.ToString("o")
+    }, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+}
+
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-send-check me-2 text-warning"></i>Test Webhook</h1>
+        <div class="text-muted small mt-1">Fire a real HTTP POST to verify your endpoint</div>
+    </div>
+    <a href="/hooks?serviceId=@Model.ServiceId" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back to Webhooks
+    </a>
+</div>
+
+<div class="page-body">
+    <div class="row g-4" style="max-width:1000px;">
+
+        <!-- Left: config panel -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom fw-semibold text-secondary d-flex align-items-center gap-2">
+                    <i class="bi bi-link-45deg text-primary"></i> Endpoint
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <div class="small fw-semibold text-uppercase text-muted mb-1">Name</div>
+                        <div class="fw-medium">@Model.Name</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="small fw-semibold text-uppercase text-muted mb-1">URL</div>
+                        <div class="font-monospace small text-break" style="color:#334155;">@Model.Url</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="small fw-semibold text-uppercase text-muted mb-1">Secret</div>
+                        @if (!string.IsNullOrEmpty(Model.Secret))
+                        {
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                <i class="bi bi-shield-check me-1"></i>configured
+                            </span>
+                            <div class="form-text mt-1">Note: the secret is not sent in the test - it's used for HMAC signing in production.</div>
+                        }
+                        else
+                        {
+                            <span class="text-muted small">none</span>
+                        }
+                    </div>
+                    <div>
+                        <div class="small fw-semibold text-uppercase text-muted mb-1">Status</div>
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary-subtle text-secondary border">Inactive</span>
+                            <div class="form-text mt-1 text-warning">This hook is inactive - it won't receive live alerts, but you can still test it.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: payload + result -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom fw-semibold text-secondary d-flex align-items-center gap-2">
+                    <i class="bi bi-code-slash text-primary"></i> Payload
+                    <span class="badge bg-secondary-subtle text-secondary ms-auto">application/json</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-uppercase text-muted">Request body</label>
+                        <textarea id="payload" class="form-control font-monospace shadow-none"
+                                  rows="16" style="font-size:.78rem; resize:vertical;">@defaultPayload</textarea>
+                    </div>
+
+                    <div class="d-flex gap-2 mb-4">
+                        <button class="btn btn-warning text-dark px-4" id="btn-fire">
+                            <i class="bi bi-send me-1"></i>Fire request
+                        </button>
+                        <button class="btn btn-outline-secondary" id="btn-reset" title="Reset to default payload">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                    </div>
+
+                    <!-- Result panel -->
+                    <div id="result-panel" class="d-none">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="small fw-semibold text-uppercase text-muted">Response</span>
+                            <span id="status-badge" class="badge px-2"></span>
+                            <span id="time-badge" class="badge bg-secondary-subtle text-secondary border ms-auto"></span>
+                        </div>
+                        <pre id="result-body"
+                             class="rounded p-3 mb-0"
+                             style="background:#0f172a; color:#94a3b8; font-size:.75rem; max-height:260px; overflow-y:auto; white-space:pre-wrap;"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const defaultPayload = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(defaultPayload));
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+    document.getElementById('payload').value = defaultPayload;
+});
+
+document.getElementById('btn-fire').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-fire');
+    const payload = document.getElementById('payload').value.trim();
+
+    // Validate JSON
+    try { JSON.parse(payload); }
+    catch { alert('Payload is not valid JSON.'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Firing…';
+
+    try {
+        const res  = await fetch('/hooks/test/@Model.Id/fire', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payload })
+        });
+        const data = await res.json();
+
+        const panel  = document.getElementById('result-panel');
+        const badge  = document.getElementById('status-badge');
+        const time   = document.getElementById('time-badge');
+        const body   = document.getElementById('result-body');
+
+        panel.classList.remove('d-none');
+
+        const statusClass = data.ok
+            ? 'bg-success-subtle text-success border border-success-subtle'
+            : 'bg-danger-subtle text-danger border border-danger-subtle';
+
+        badge.className = `badge px-2 ${statusClass}`;
+        badge.textContent = `${data.statusCode} ${data.statusText}`;
+        time.textContent  = `${data.ms}ms`;
+        body.textContent  = data.body || '(empty response)';
+
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (e) {
+        alert('Request failed: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send me-1"></i>Fire request';
+    }
+});
+</script>
+}

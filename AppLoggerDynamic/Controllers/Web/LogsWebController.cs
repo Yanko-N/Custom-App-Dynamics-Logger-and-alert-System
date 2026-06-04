@@ -24,7 +24,10 @@ namespace AppLoggerDynamic.Controllers.Web
             CancellationToken cancellationToken = default)
         {
             var auth = RequireAuth();
-            if (auth != null) return auth;
+            if (auth != null)
+            {
+                return auth;
+            }
 
             if (page < 1) page = 1;
 
@@ -33,7 +36,9 @@ namespace AppLoggerDynamic.Controllers.Web
             var services = servicesResult.IsSuccess ? servicesResult.Value.ToList() : new List<Domain.Entities.Service>();
 
             if (serviceId == 0 && services.Count > 0)
+            {
                 serviceId = services[0].Id;
+            }
 
             var vm = new LogsViewModel
             {

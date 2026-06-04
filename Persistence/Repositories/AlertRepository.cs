@@ -16,14 +16,11 @@ namespace Persistence.Repositories
             _logger = logger;
         }
 
-        public async Task<int?> CreateAlertAsync(int serviceId, string name, string level, string condition, int thresholdValue, int windowSeconds, CancellationToken cancellationToken)
+        public async Task<int?> CreateAlertAsync(int serviceId, string name, string level, string condition,
+            int thresholdValue, int windowSeconds, string? messagePattern, CancellationToken cancellationToken)
         {
             bool serviceExists = await _context.Services.AnyAsync(s => s.Id == serviceId, cancellationToken);
-
-            if (!serviceExists)
-            {
-                return null;
-            }
+            if (!serviceExists) return null;
 
             var alert = new Alert
             {
@@ -33,6 +30,7 @@ namespace Persistence.Repositories
                 Condition = condition,
                 ThresholdValue = thresholdValue,
                 WindowSeconds = windowSeconds,
+                MessagePattern = string.IsNullOrWhiteSpace(messagePattern) ? null : messagePattern.Trim(),
                 IsActive = true
             };
 
@@ -63,6 +61,14 @@ namespace Persistence.Repositories
                 .ToListAsync(cancellationToken);
         }
 
+        public async Task<IEnumerable<Alert>> GetActiveByServiceIdAsync(int serviceId, CancellationToken cancellationToken)
+        {
+            return await _context.Alerts
+                .AsNoTracking()
+                .Where(a => a.ServiceId == serviceId && a.IsActive)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<Alert?> GetByIdAsync(int id, CancellationToken cancellationToken)
         {
             return await _context.Alerts
@@ -70,14 +76,11 @@ namespace Persistence.Repositories
                 .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
         }
 
-        public async Task<bool> UpdateAsync(int id, string name, string level, string condition, int thresholdValue, int windowSeconds, bool isActive, CancellationToken cancellationToken)
+        public async Task<bool> UpdateAsync(int id, string name, string level, string condition,
+            int thresholdValue, int windowSeconds, bool isActive, string? messagePattern, CancellationToken cancellationToken)
         {
             var alert = await _context.Alerts.FindAsync([id], cancellationToken);
-
-            if (alert == null)
-            {
-                return false;
-            }
+            if (alert == null) return false;
 
             alert.Name = name;
             alert.Level = level;
@@ -85,6 +88,7 @@ namespace Persistence.Repositories
             alert.ThresholdValue = thresholdValue;
             alert.WindowSeconds = windowSeconds;
             alert.IsActive = isActive;
+            alert.MessagePattern = string.IsNullOrWhiteSpace(messagePattern) ? null : messagePattern.Trim();
 
             try
             {
@@ -100,11 +104,7 @@ namespace Persistence.Repositories
         public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken)
         {
             var alert = await _context.Alerts.FindAsync([id], cancellationToken);
-
-            if (alert == null)
-            {
-                return false;
-            }
+            if (alert == null) return false;
 
             try
             {
@@ -116,6 +116,38 @@ namespace Persistence.Repositories
                 _logger.LogError(ex, "Database error deleting alert {AlertId}", id);
                 return false;
             }
+        }
+
+        public async Task<long> CreateTriggerAsync(int alertId, string details, CancellationToken cancellationToken)
+        {
+            var trigger = new AlertTrigger
+            {
+                AlertId = alertId,
+                FiredAt = DateTime.UtcNow,
+                Details = details
+            };
+
+            await _context.AlertTriggers.AddAsync(trigger, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+            return trigger.Id;
+        }
+
+        public async Task CreateHookEventAsync(int hookId, long triggerId, string payload, int? statusCode, string status, CancellationToken cancellationToken)
+        {
+            var ev = new HookEvent
+            {
+                HookId = hookId,
+                AlertTriggerId = triggerId,
+                Payload = payload,
+                StatusCode = statusCode,
+                Status = status,
+                Attempts = 1,
+                LastAttemptAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _context.HookEvents.AddAsync(ev, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

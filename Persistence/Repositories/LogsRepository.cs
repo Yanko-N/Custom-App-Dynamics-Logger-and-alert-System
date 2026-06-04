@@ -27,6 +27,18 @@ namespace Persistence.Repositories
             return await PaginatedList<CustomLog>.CreateAsync(query, skip, take);
         }
 
+        public async Task<int> CountLogsInWindowAsync(int serviceId, string level, DateTime from, string? messagePattern, CancellationToken cancellationToken)
+        {
+            var query = _context.Logs
+                .AsNoTracking()
+                .Where(l => l.ServiceId == serviceId && l.Level == level.ToUpperInvariant() && l.Timestamp >= from);
+
+            if (!string.IsNullOrWhiteSpace(messagePattern))
+                query = query.Where(l => EF.Functions.Like(l.Message, $"%{messagePattern}%"));
+
+            return await query.CountAsync(cancellationToken);
+        }
+
         public async Task<long?> IngestLogAsync(CustomLog log, CancellationToken cancellationToken)
         {
             try

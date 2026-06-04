@@ -15,6 +15,7 @@ namespace Application.Command
         public int ThresholdValue { get; set; }
         public int WindowSeconds { get; set; }
         public bool IsActive { get; set; }
+        public string? MessagePattern { get; set; }
     }
 
     public class UpdateAlertCommandHandler : IRequestHandler<UpdateAlertCommand, Result<bool>>
@@ -61,7 +62,8 @@ namespace Application.Command
 
                 var success = await _alertRepository.UpdateAsync(
                     request.Id, request.Name, normalizedLevel, request.Condition,
-                    request.ThresholdValue, request.WindowSeconds, request.IsActive, cancellationToken);
+                    request.ThresholdValue, request.WindowSeconds, request.IsActive,
+                    request.MessagePattern, cancellationToken);
 
                 if (!success)
                 {

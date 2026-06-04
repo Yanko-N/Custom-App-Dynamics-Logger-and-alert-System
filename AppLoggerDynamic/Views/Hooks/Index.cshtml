@@ -1,0 +1,125 @@
+@model AppLoggerDynamic.ViewModels.HooksViewModel
+@{
+    ViewData["Title"] = "Webhooks";
+    ViewData["Nav"] = "hooks";
+}
+
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-link-45deg me-2 text-primary"></i>Webhooks</h1>
+        <div class="text-muted small mt-1">Deliver alert notifications to external endpoints</div>
+    </div>
+    @if (Model.SelectedServiceId > 0)
+    {
+        <a href="/hooks/create?serviceId=@Model.SelectedServiceId" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>New Webhook
+        </a>
+    }
+</div>
+
+<div class="page-body">
+
+    <!-- Service selector -->
+    <div class="filter-bar d-flex align-items-end gap-3 mb-3">
+        <form method="get" action="/hooks" class="d-flex gap-2 align-items-end">
+            <div>
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Service</label>
+                <select name="serviceId" class="form-select form-select-sm shadow-none" style="min-width:220px;"
+                        onchange="this.form.submit()">
+                    @foreach (var svc in Model.Services)
+                    {
+                        <option value="@svc.Id" @(svc.Id == Model.SelectedServiceId ? "selected" : "")>
+                            @svc.Name (@svc.Environment)
+                        </option>
+                    }
+                </select>
+            </div>
+        </form>
+    </div>
+
+    @if (!Model.Hooks.Any())
+    {
+        <div class="card border-0 shadow-sm text-center py-5">
+            <div class="text-muted">
+                <i class="bi bi-link-45deg display-5 d-block mb-3"></i>
+                No webhooks configured for this service.
+            </div>
+            @if (Model.SelectedServiceId > 0)
+            {
+                <a href="/hooks/create?serviceId=@Model.SelectedServiceId" class="btn btn-primary btn-sm mt-3">
+                    <i class="bi bi-plus-lg me-1"></i>Create your first webhook
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>URL</th>
+                            <th>Secret</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var hook in Model.Hooks)
+                        {
+                            <tr>
+                                <td class="fw-medium">@hook.Name</td>
+                                <td class="text-muted small font-monospace" style="max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                    @hook.Url
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(hook.Secret))
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                            <i class="bi bi-shield-check me-1"></i>set
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">none</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (hook.IsActive)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary border">Inactive</span>
+                                    }
+                                </td>
+                                <td class="text-muted small">@hook.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td class="text-end">
+                                    <a href="/hooks/test/@hook.Id" class="btn btn-sm btn-outline-warning me-1">
+                                        <i class="bi bi-send-check me-1"></i>Test
+                                    </a>
+                                    <a href="/hooks/edit/@hook.Id" class="btn btn-sm btn-outline-secondary me-1">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="post" action="/hooks/delete/@hook.Id" class="d-inline"
+                                          onsubmit="return confirm('Delete webhook &quot;@hook.Name&quot;?')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="serviceId" value="@hook.ServiceId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+</div>

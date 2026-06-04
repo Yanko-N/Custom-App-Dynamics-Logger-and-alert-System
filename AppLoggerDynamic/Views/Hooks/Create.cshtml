@@ -1,0 +1,98 @@
+@model AppLoggerDynamic.ViewModels.HookFormViewModel
+@{
+    ViewData["Title"] = "New Webhook";
+    ViewData["Nav"] = "hooks";
+}
+
+<div class="page-header">
+    <h1><i class="bi bi-link-45deg me-2 text-primary"></i>New Webhook</h1>
+    <a href="/hooks?serviceId=@Model.ServiceId" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<div class="page-body">
+    <div class="card border-0 shadow-sm" style="max-width:640px;">
+        <div class="card-header bg-white border-bottom fw-semibold text-secondary d-flex align-items-center gap-2">
+            <i class="bi bi-sliders text-primary"></i> Webhook configuration
+        </div>
+        <div class="card-body p-4">
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger d-flex align-items-start gap-2 py-2 small">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+                    <div>
+                        @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <div>@err.ErrorMessage</div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <form method="post" action="/hooks/create">
+                @Html.AntiForgeryToken()
+
+                <!-- Service -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Service</label>
+                    <select name="ServiceId" class="form-select shadow-none">
+                        @foreach (var svc in Model.Services)
+                        {
+                            <option value="@svc.Id" @(svc.Id == Model.ServiceId ? "selected" : "")>
+                                @svc.Name (@svc.Environment)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Name -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Name</label>
+                    <input type="text" name="Name" value="@Model.Name" class="form-control shadow-none"
+                           placeholder="e.g. Slack alerts" required />
+                </div>
+
+                <!-- URL -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Endpoint URL</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-link text-muted"></i>
+                        </span>
+                        <input type="url" name="Url" value="@Model.Url"
+                               class="form-control border-start-0 shadow-none"
+                               placeholder="https://hooks.example.com/..." required />
+                    </div>
+                    <div class="form-text">Must be a valid absolute URL (https recommended)</div>
+                </div>
+
+                <!-- Secret -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">
+                        Secret <span class="text-muted fw-normal">(optional)</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-key text-muted"></i>
+                        </span>
+                        <input type="text" name="Secret" value="@Model.Secret"
+                               class="form-control border-start-0 shadow-none font-monospace"
+                               placeholder="Leave blank for no HMAC signing" />
+                    </div>
+                    <div class="form-text">Used to sign payloads via HMAC-SHA256</div>
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-check-lg me-1"></i> Create webhook
+                    </button>
+                    <a href="/hooks?serviceId=@Model.ServiceId" class="btn btn-outline-secondary px-4">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

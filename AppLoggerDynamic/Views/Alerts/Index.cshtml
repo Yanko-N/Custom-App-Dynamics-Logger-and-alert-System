@@ -1,15 +1,18 @@
 @model AppLoggerDynamic.ViewModels.AlertsViewModel
 @{
-    ViewData["Title"] = "Alerts";
+    ViewData["Title"] = "Health Rules";
     ViewData["Nav"] = "alerts";
 }
 
 <div class="page-header">
-    <h1><i class="bi bi-bell me-2 text-primary"></i>Alerts</h1>
+    <div>
+        <h1><i class="bi bi-shield-check me-2 text-primary"></i>Health Rules</h1>
+        <div class="text-muted small mt-1">Live evaluation against the current time window</div>
+    </div>
     @if (Model.SelectedServiceId > 0)
     {
         <a href="/alerts/create?serviceId=@Model.SelectedServiceId" class="btn btn-sm btn-primary">
-            <i class="bi bi-plus-lg me-1"></i>New Alert
+            <i class="bi bi-plus-lg me-1"></i>New Health Rule
         </a>
     }
 </div>
@@ -17,100 +20,142 @@
 <div class="page-body">
 
     <!-- Service selector -->
-    <div class="filter-bar d-flex align-items-end gap-2">
-        <form method="get" action="/alerts">
-            <div class="d-flex gap-2 align-items-end">
-                <div>
-                    <label class="form-label small fw-medium mb-1">Service</label>
-                    <select name="serviceId" class="form-select form-select-sm" style="min-width:200px;" onchange="this.form.submit()">
-                        @foreach (var svc in Model.Services)
-                        {
-                            <option value="@svc.Id" @(svc.Id == Model.SelectedServiceId ? "selected" : "")>
-                                @svc.Name (@svc.Environment)
-                            </option>
-                        }
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-sm btn-outline-secondary">Go</button>
+    <div class="filter-bar d-flex align-items-end gap-3 mb-3">
+        <form method="get" action="/alerts" class="d-flex gap-2 align-items-end">
+            <div>
+                <label class="form-label small fw-semibold text-uppercase text-muted mb-1">Service</label>
+                <select name="serviceId" class="form-select form-select-sm shadow-none" style="min-width:220px;"
+                        onchange="this.form.submit()">
+                    @foreach (var svc in Model.Services)
+                    {
+                        <option value="@svc.Id" @(svc.Id == Model.SelectedServiceId ? "selected" : "")>
+                            @svc.Name (@svc.Environment)
+                        </option>
+                    }
+                </select>
             </div>
         </form>
+
+        @if (Model.AlertStatuses.Any())
+        {
+            var violations = Model.AlertStatuses.Count(a => a.IsViolating && a.Alert.IsActive);
+            var ok = Model.AlertStatuses.Count(a => !a.IsViolating && a.Alert.IsActive);
+            <div class="d-flex gap-2 ms-auto">
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>@violations Violation@(violations != 1 ? "s" : "")
+                </span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+                    <i class="bi bi-check-circle-fill me-1"></i>@ok Healthy
+                </span>
+            </div>
+        }
     </div>
 
-    <div class="card">
-        @if (!Model.Alerts.Any())
-        {
-            <div class="text-center py-5 text-muted">
-                <i class="bi bi-bell-slash display-5"></i>
-                <p class="mt-2">No alerts configured for this service.</p>
-                @if (Model.SelectedServiceId > 0)
-                {
-                    <a href="/alerts/create?serviceId=@Model.SelectedServiceId" class="btn btn-sm btn-primary">
-                        Create your first alert
-                    </a>
-                }
+    @if (!Model.AlertStatuses.Any())
+    {
+        <div class="card border-0 shadow-sm text-center py-5">
+            <div class="text-muted">
+                <i class="bi bi-shield display-5 d-block mb-3"></i>
+                No health rules configured for this service.
             </div>
-        }
-        else
+            @if (Model.SelectedServiceId > 0)
+            {
+                <a href="/alerts/create?serviceId=@Model.SelectedServiceId" class="btn btn-primary btn-sm mt-3">
+                    <i class="bi bi-plus-lg me-1"></i>Create your first health rule
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3">
+        @foreach (var item in Model.AlertStatuses)
         {
-            <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Level</th>
-                            <th>Condition</th>
-                            <th>Threshold</th>
-                            <th>Window</th>
-                            <th>Active</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var alert in Model.Alerts)
-                        {
-                            var lvl = alert.Level?.ToUpper() ?? "";
-                            var badgeClass = lvl switch
+            var alert = item.Alert;
+            var violating = item.IsViolating && alert.IsActive;
+            var inactive = !alert.IsActive;
+
+            var borderColor   = inactive ? "#dee2e6" : (violating ? "#dc3545" : "#198754");
+            var statusBg      = inactive ? "bg-secondary-subtle text-secondary"
+                                         : (violating ? "bg-danger-subtle text-danger"
+                                                      : "bg-success-subtle text-success");
+            var statusIcon    = inactive ? "bi-pause-circle" : (violating ? "bi-exclamation-triangle-fill" : "bi-check-circle-fill");
+            var statusLabel   = inactive ? "Inactive" : (violating ? "VIOLATION" : "Healthy");
+
+            var lvlBadge = alert.Level switch
+            {
+                "ERROR" => "badge-error",
+                "WARN"  => "badge-warn",
+                "INFO"  => "badge-info",
+                "FATAL" => "badge-fatal",
+                _       => "badge-debug"
+            };
+
+            var barColor = violating ? "bg-danger" : "bg-success";
+            var barPct   = item.ProgressPercent;
+
+            <div class="card border-0 shadow-sm" style="border-left: 4px solid @borderColor !important; border-left-width: 4px !important;">
+                <div class="card-body p-0">
+
+                    <!-- Header row -->
+                    <div class="d-flex align-items-center justify-content-between px-4 pt-3 pb-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="badge-level @lvlBadge">@alert.Level</span>
+                            <span class="fw-semibold fs-6">@alert.Name</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge @statusBg border px-2 py-1">
+                                <i class="bi @statusIcon me-1"></i>@statusLabel
+                            </span>
+                            <a href="/alerts/edit/@alert.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="post" action="/alerts/delete/@alert.Id" class="d-inline"
+                                  onsubmit="return confirm('Delete this health rule?')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="serviceId" value="@alert.ServiceId" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Rule summary -->
+                    <div class="px-4 pb-2">
+                        <span class="text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Trigger when <strong>@alert.Level</strong> log count
+                            @if (!string.IsNullOrWhiteSpace(alert.MessagePattern))
                             {
-                                "ERROR" => "badge-error",
-                                "WARN" or "WARNING" => "badge-warn",
-                                "INFO" => "badge-info",
-                                _ => "badge-debug"
-                            };
-                            <tr>
-                                <td class="fw-medium">@alert.Name</td>
-                                <td><span class="badge-level @badgeClass">@alert.Level</span></td>
-                                <td><span class="alert-condition">@alert.Condition</span></td>
-                                <td>@alert.ThresholdValue</td>
-                                <td>@alert.WindowSeconds s</td>
-                                <td>
-                                    @if (alert.IsActive)
-                                    {
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Inactive</span>
-                                    }
-                                </td>
-                                <td class="text-end">
-                                    <a href="/alerts/edit/@alert.Id" class="btn btn-sm btn-outline-secondary me-1">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <form method="post" action="/alerts/delete/@alert.Id" class="d-inline"
-                                          onsubmit="return confirm('Delete this alert?')">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="serviceId" value="@alert.ServiceId" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                                <span>matching <code class="bg-light px-1 rounded">%@alert.MessagePattern%</code></span>
+                            }
+                            is <strong>@item.ConditionSymbol @alert.ThresholdValue</strong>
+                            within a <strong>@alert.WindowSeconds</strong>s window
+                        </span>
+                    </div>
+
+                    <!-- Live meter -->
+                    <div class="px-4 pb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small text-muted">Current window</span>
+                            <span class="small fw-semibold @(violating ? "text-danger" : "text-success")">
+                                @item.CurrentCount <span class="text-muted fw-normal">/ @alert.ThresholdValue occurrences</span>
+                            </span>
+                        </div>
+                        <div class="progress" style="height:6px; background:#f1f5f9;">
+                            <div class="progress-bar @barColor"
+                                 role="progressbar"
+                                 style="width:@(barPct)%; transition: width .4s ease;"
+                                 aria-valuenow="@barPct" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         }
-    </div>
+        </div>
+    }
 
 </div>

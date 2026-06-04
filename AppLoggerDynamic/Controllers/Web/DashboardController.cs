@@ -18,7 +18,10 @@ namespace AppLoggerDynamic.Controllers.Web
         public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
             var auth = RequireAuth();
-            if (auth != null) return auth;
+            if (auth != null)
+            {
+                return auth;
+            }
 
             var accountId = GetSessionAccountId()!.Value;
             var result = await _mediator.Send(new GetServicesQuery(accountId), cancellationToken);

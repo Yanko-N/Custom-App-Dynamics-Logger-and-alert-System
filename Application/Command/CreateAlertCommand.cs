@@ -14,6 +14,7 @@ namespace Application.Command
         public string Condition { get; set; } = string.Empty;
         public int ThresholdValue { get; set; }
         public int WindowSeconds { get; set; } = 60;
+        public string? MessagePattern { get; set; }
     }
 
     public class CreateAlertCommandHandler : IRequestHandler<CreateAlertCommand, Result<int>>
@@ -60,7 +61,7 @@ namespace Application.Command
 
                 var alertId = await _alertRepository.CreateAlertAsync(
                     request.ServiceId, request.Name, normalizedLevel, request.Condition,
-                    request.ThresholdValue, request.WindowSeconds, cancellationToken);
+                    request.ThresholdValue, request.WindowSeconds, request.MessagePattern, cancellationToken);
 
                 if (alertId == null)
                 {

@@ -1,0 +1,73 @@
+@model AppLoggerDynamic.ViewModels.ServiceFormViewModel
+@{
+    ViewData["Title"] = "New Service";
+    ViewData["Nav"] = "services";
+}
+
+<div class="page-header">
+    <h1><i class="bi bi-hdd-network-fill me-2 text-primary"></i>New Service</h1>
+    <a href="/services" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<div class="page-body">
+    <div class="card border-0 shadow-sm" style="max-width:580px;">
+        <div class="card-header bg-white border-bottom fw-semibold text-secondary d-flex align-items-center gap-2">
+            <i class="bi bi-sliders text-primary"></i> Service configuration
+        </div>
+        <div class="card-body p-4">
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger d-flex align-items-start gap-2 py-2 small">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+                    <div>
+                        @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <div>@err.ErrorMessage</div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <form method="post" action="/services/create">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Service name</label>
+                    <input type="text" name="Name" value="@Model.Name" class="form-control shadow-none"
+                           placeholder="e.g. payment-api" required />
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Environment</label>
+                    <select name="Environment" class="form-select shadow-none">
+                        <option value="production" @(Model.Environment == "production" ? "selected" : "")>production</option>
+                        <option value="staging"    @(Model.Environment == "staging"    ? "selected" : "")>staging</option>
+                        <option value="development" @(Model.Environment == "development" ? "selected" : "")>development</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-uppercase text-muted">Version</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-muted">v</span>
+                        <input type="text" name="Version" value="@Model.Version"
+                               class="form-control border-start-0 shadow-none"
+                               placeholder="1.0.0" required />
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-check-lg me-1"></i> Create service
+                    </button>
+                    <a href="/services" class="btn btn-outline-secondary px-4">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

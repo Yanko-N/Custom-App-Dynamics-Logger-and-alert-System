@@ -2,21 +2,22 @@ using Application.Command;
 using Application.Interfaces;
 using Application.Queries;
 using AppLoggerDynamic.ViewModels;
-using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace AppLoggerDynamic.Controllers.Web
 {
-    [Route("alerts")]
-    public class AlertsWebController : WebBaseController
+    [Route("hooks")]
+    public class HooksWebController : WebBaseController
     {
         private readonly IMediator _mediator;
-        private readonly ILogsRepository _logsRepository;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public AlertsWebController(IMediator mediator, ILogsRepository logsRepository)
+        public HooksWebController(IMediator mediator, IHttpClientFactory httpClientFactory)
         {
             _mediator = mediator;
-            _logsRepository = logsRepository;
+            _httpClientFactory = httpClientFactory;
         }
 
         [HttpGet("")]
@@ -33,50 +34,22 @@ namespace AppLoggerDynamic.Controllers.Web
             var services = servicesResult.IsSuccess ? servicesResult.Value.ToList() : new List<Domain.Entities.Service>();
 
             if (serviceId == 0 && services.Count > 0)
+            {
                 serviceId = services[0].Id;
+            }
 
-            var viewModel = new AlertsViewModel { Services = services, SelectedServiceId = serviceId };
+            var viewModel = new HooksViewModel { Services = services, SelectedServiceId = serviceId };
 
             if (serviceId > 0)
             {
-                var alertsResult = await _mediator.Send(new GetAlertsQuery(serviceId), cancellationToken);
-                if (alertsResult.IsSuccess)
+                var hooksResult = await _mediator.Send(new GetHooksQuery(serviceId), cancellationToken);
+                if (hooksResult.IsSuccess)
                 {
-                    foreach (var alert in alertsResult.Value)
-                    {
-                        var windowStart = DateTime.UtcNow.AddSeconds(-alert.WindowSeconds);
-                        var count = await _logsRepository.CountLogsInWindowAsync(
-                            alert.ServiceId, alert.Level, windowStart, alert.MessagePattern, cancellationToken);
-
-                        bool violating = false;
-
-                        switch (alert.Condition)
-                        {
-                            case "GreaterThan":
-                                violating = count > alert.ThresholdValue;
-                                break;
-                            case "LessThan":
-                                violating = count < alert.ThresholdValue;
-                                break;
-                            case "Equals":
-                                violating = count == alert.ThresholdValue;
-                                break;
-                            default:
-                                violating = false;
-                                break;
-                        }
-
-                        viewModel.AlertStatuses.Add(new AlertStatusItem
-                        {
-                            Alert = alert,
-                            CurrentCount = count,
-                            IsViolating = violating
-                        });
-                    }
+                    viewModel.Hooks = hooksResult.Value.ToList();
                 }
             }
 
-            return View("~/Views/Alerts/Index.cshtml", viewModel);
+            return View("~/Views/Hooks/Index.cshtml", viewModel);
         }
 
         [HttpGet("create")]
@@ -92,7 +65,7 @@ namespace AppLoggerDynamic.Controllers.Web
             var servicesResult = await _mediator.Send(new GetServicesQuery(accountId), cancellationToken);
             var services = servicesResult.IsSuccess ? servicesResult.Value.ToList() : new List<Domain.Entities.Service>();
 
-            return View("~/Views/Alerts/Create.cshtml", new AlertFormViewModel
+            return View("~/Views/Hooks/Create.cshtml", new HookFormViewModel
             {
                 ServiceId = serviceId > 0 ? serviceId : (services.FirstOrDefault()?.Id ?? 0),
                 Services = services
@@ -101,7 +74,7 @@ namespace AppLoggerDynamic.Controllers.Web
 
         [HttpPost("create")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([FromForm] AlertFormViewModel form, CancellationToken cancellationToken)
+        public async Task<IActionResult> Create([FromForm] HookFormViewModel form, CancellationToken cancellationToken)
         {
             var auth = RequireAuth();
             if (auth != null)
@@ -109,25 +82,22 @@ namespace AppLoggerDynamic.Controllers.Web
                 return auth;
             }
 
-            var command = new CreateAlertCommand
+            var command = new CreateHookCommand
             {
                 ServiceId = form.ServiceId,
                 Name = form.Name,
-                Level = form.Level,
-                Condition = form.Condition,
-                ThresholdValue = form.ThresholdValue,
-                WindowSeconds = form.WindowSeconds,
-                MessagePattern = form.MessagePattern
+                Url = form.Url,
+                Secret = string.IsNullOrWhiteSpace(form.Secret) ? null : form.Secret
             };
 
             var result = await _mediator.Send(command, cancellationToken);
             if (!result.IsSuccess)
             {
-                ModelState.AddModelError(string.Empty, result.Error?.Message ?? "Failed to create alert.");
+                ModelState.AddModelError(string.Empty, result.Error?.Message ?? "Failed to create hook.");
                 var accountId = GetSessionAccountId()!.Value;
                 var servicesResult = await _mediator.Send(new GetServicesQuery(accountId), cancellationToken);
                 form.Services = servicesResult.IsSuccess ? servicesResult.Value.ToList() : new();
-                return View("~/Views/Alerts/Create.cshtml", form);
+                return View("~/Views/Hooks/Create.cshtml", form);
             }
 
             return RedirectToAction("Index", new { serviceId = form.ServiceId });
@@ -142,32 +112,30 @@ namespace AppLoggerDynamic.Controllers.Web
                 return auth;
             }
 
-            var alertResult = await _mediator.Send(new GetAlertByIdQuery(id), cancellationToken);
-            if (!alertResult.IsSuccess)
+            var hookResult = await _mediator.Send(new GetHookByIdQuery(id), cancellationToken);
+            if (!hookResult.IsSuccess)
+            {
                 return RedirectToAction("Index");
+            }
 
-            var alert = alertResult.Value;
+            var hook = hookResult.Value;
             var accountId = GetSessionAccountId()!.Value;
             var servicesResult = await _mediator.Send(new GetServicesQuery(accountId), cancellationToken);
 
-            return View("~/Views/Alerts/Edit.cshtml", new AlertFormViewModel
+            return View("~/Views/Hooks/Edit.cshtml", new HookFormViewModel
             {
-                Id = alert.Id,
-                ServiceId = alert.ServiceId,
-                Name = alert.Name,
-                Level = alert.Level,
-                Condition = alert.Condition,
-                ThresholdValue = alert.ThresholdValue,
-                WindowSeconds = alert.WindowSeconds,
-                IsActive = alert.IsActive,
-                MessagePattern = alert.MessagePattern,
+                Id = hook.Id,
+                ServiceId = hook.ServiceId,
+                Name = hook.Name,
+                Url = hook.Url,
+                IsActive = hook.IsActive,
                 Services = servicesResult.IsSuccess ? servicesResult.Value.ToList() : new()
             });
         }
 
         [HttpPost("edit/{id}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [FromForm] AlertFormViewModel form, CancellationToken cancellationToken)
+        public async Task<IActionResult> Edit(int id, [FromForm] HookFormViewModel form, CancellationToken cancellationToken)
         {
             var auth = RequireAuth();
             if (auth != null)
@@ -175,26 +143,24 @@ namespace AppLoggerDynamic.Controllers.Web
                 return auth;
             }
 
-            var command = new UpdateAlertCommand
+            var command = new UpdateHookCommand
             {
                 Id = id,
                 Name = form.Name,
-                Level = form.Level,
-                Condition = form.Condition,
-                ThresholdValue = form.ThresholdValue,
-                WindowSeconds = form.WindowSeconds,
-                IsActive = form.IsActive,
-                MessagePattern = form.MessagePattern
+                Url = form.Url,
+                Secret = string.IsNullOrWhiteSpace(form.Secret) ? null : form.Secret,
+                IsActive = form.IsActive
             };
 
             var result = await _mediator.Send(command, cancellationToken);
             if (!result.IsSuccess)
             {
-                ModelState.AddModelError(string.Empty, result.Error?.Message ?? "Failed to update alert.");
+                ModelState.AddModelError(string.Empty, result.Error?.Message ?? "Failed to update hook.");
                 var accountId = GetSessionAccountId()!.Value;
                 var servicesResult = await _mediator.Send(new GetServicesQuery(accountId), cancellationToken);
+                form.Id = id;
                 form.Services = servicesResult.IsSuccess ? servicesResult.Value.ToList() : new();
-                return View("~/Views/Alerts/Edit.cshtml", form);
+                return View("~/Views/Hooks/Edit.cshtml", form);
             }
 
             return RedirectToAction("Index", new { serviceId = form.ServiceId });
@@ -210,8 +176,9 @@ namespace AppLoggerDynamic.Controllers.Web
                 return auth;
             }
 
-            await _mediator.Send(new DeleteAlertCommand(id), cancellationToken);
+            await _mediator.Send(new DeleteHookCommand(id), cancellationToken);
             return RedirectToAction("Index", new { serviceId });
         }
+
     }
 }

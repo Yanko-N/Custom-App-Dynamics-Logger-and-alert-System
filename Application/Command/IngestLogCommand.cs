@@ -3,6 +3,7 @@ using Domain.Common;
 using Domain.Common.Errors;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Application.Command
@@ -19,11 +20,13 @@ namespace Application.Command
     public class IngestLogCommandHandler : IRequestHandler<IngestLogCommand, Result<long>>
     {
         private readonly ILogsRepository _logsRepository;
+        private readonly IAlertEvaluationQueue _alertQueue;
         private readonly ILogger<IngestLogCommandHandler> _logger;
 
-        public IngestLogCommandHandler(ILogsRepository logsRepository, ILogger<IngestLogCommandHandler> logger)
+        public IngestLogCommandHandler(ILogsRepository logsRepository, IAlertEvaluationQueue alertQueue, ILogger<IngestLogCommandHandler> logger)
         {
             _logsRepository = logsRepository;
+            _alertQueue = alertQueue;
             _logger = logger;
         }
 
@@ -59,6 +62,14 @@ namespace Application.Command
                 {
                     return Result.Failure<long>(LogErrors.ErrorWhileSaving);
                 }
+
+                await _alertQueue.EnqueueAsync(new EvaluateAlertsCommand
+                {
+                    ServiceId = request.ServiceId,
+                    Level = normalizedLevel,
+                    Message = request.Message,
+                    LogId = logId.Value
+                }, cancellationToken);
 
                 return Result.Success(logId.Value);
             }

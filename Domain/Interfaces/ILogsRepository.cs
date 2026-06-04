@@ -7,5 +7,6 @@ namespace Domain.Interfaces
     {
         Task<PaginatedList<CustomLog>> GetLogsAsync(int serviceId, int skip, int take);
         Task<long?> IngestLogAsync(CustomLog log, CancellationToken cancellationToken);
+        Task<int> CountLogsInWindowAsync(int serviceId, string level, DateTime from, string? messagePattern, CancellationToken cancellationToken);
     }
 }
