@@ -45,6 +45,10 @@ namespace Application.Command
 
                 return Result.Success(new ApiKeyCreatedResult(created.Value.Id, created.Value.RawKey, request.Label));
             }
+            catch (Domain.Common.Exceptions.ApiKeyLabelConflictException)
+            {
+                return Result.Failure<ApiKeyCreatedResult>(ApiKeyErrors.LabelTaken);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error creating API key for account {AccountId}", request.AccountId);

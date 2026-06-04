@@ -1,3 +1,4 @@
+@using Domain.Common
 @model List<Domain.Entities.Service>
 @{
     ViewData["Title"] = "Services";
@@ -42,13 +43,7 @@
                     <tbody>
                         @foreach (var svc in Model)
                         {
-                            var envClass = svc.Environment?.ToLower() switch
-                            {
-                                "production" => "env-production",
-                                "staging" => "env-staging",
-                                "development" or "dev" => "env-development",
-                                _ => "env-default"
-                            };
+                            var envClass = EnvironmentClasses.GetClass(svc.Environment);
                             <tr>
                                 <td class="fw-medium">@svc.Name</td>
                                 <td>

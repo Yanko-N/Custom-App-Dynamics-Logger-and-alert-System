@@ -8,6 +8,9 @@ namespace Domain.Common.Errors
         public static Error ServiceNotFound(int serviceId) =>
             Error.NotFound("Hook.ServiceNotFound", $"Service with id '{serviceId}' was not found.");
 
+        public static Error NameTaken =>
+            Error.Conflict("Hook.NameTaken", "A hook with this name already exists for this service.");
+
         public static Error InvalidName =>
             Error.BadRequest("Hook.InvalidName", "The hook name is invalid. It cannot be empty or whitespace.");
 

@@ -44,6 +44,10 @@ namespace Application.Command
 
                 return Result.Success(serviceId.Value);
             }
+            catch (Domain.Common.Exceptions.ServiceNameConflictException)
+            {
+                return Result.Failure<int>(ServiceErrors.NameTaken);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error creating service for account {AccountId}", request.AccountId);

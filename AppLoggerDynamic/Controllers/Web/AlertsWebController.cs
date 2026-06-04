@@ -33,9 +33,15 @@ namespace AppLoggerDynamic.Controllers.Web
             var services = servicesResult.IsSuccess ? servicesResult.Value.ToList() : new List<Domain.Entities.Service>();
 
             if (serviceId == 0 && services.Count > 0)
+            {
                 serviceId = services[0].Id;
+            }
 
-            var viewModel = new AlertsViewModel { Services = services, SelectedServiceId = serviceId };
+            var viewModel = new AlertsViewModel 
+            {
+                Services = services,
+                SelectedServiceId = serviceId 
+            };
 
             if (serviceId > 0)
             {
@@ -48,8 +54,7 @@ namespace AppLoggerDynamic.Controllers.Web
                         var count = await _logsRepository.CountLogsInWindowAsync(
                             alert.ServiceId, alert.Level, windowStart, alert.MessagePattern, cancellationToken);
 
-                        bool violating = false;
-
+                        bool violating;
                         switch (alert.Condition)
                         {
                             case "GreaterThan":

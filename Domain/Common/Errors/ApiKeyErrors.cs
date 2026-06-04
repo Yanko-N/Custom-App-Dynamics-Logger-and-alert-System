@@ -11,6 +11,9 @@ namespace Domain.Common.Errors
         public static Error AlreadyRevoked =>
             Error.Conflict("ApiKey.AlreadyRevoked", "This API key has already been revoked.");
 
+        public static Error LabelTaken =>
+            Error.Conflict("ApiKey.LabelTaken", "An API key with this label already exists for this account.");
+
         public static Error InvalidLabel =>
             Error.BadRequest("ApiKey.InvalidLabel", "The API key label is invalid. It cannot be empty or whitespace.");
 

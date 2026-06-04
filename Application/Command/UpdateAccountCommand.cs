@@ -42,7 +42,7 @@ namespace Application.Command
 
                 return Result.Success(true);
             }
-            catch (Domain.Common.Exceptions.AccountAlreadyExistsException)
+            catch (Domain.Common.Exceptions.AccountNameConflictException)
             {
                 return Result.Failure<bool>(AccountErrors.NameTaken);
             }

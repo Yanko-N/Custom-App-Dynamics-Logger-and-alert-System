@@ -49,6 +49,10 @@ namespace Application.Command
 
                 return Result.Success(hookId.Value);
             }
+            catch (Domain.Common.Exceptions.HookNameConflictException)
+            {
+                return Result.Failure<int>(HookErrors.NameTaken);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error creating hook for service {ServiceId}", request.ServiceId);

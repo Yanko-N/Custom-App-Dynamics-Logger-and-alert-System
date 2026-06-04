@@ -44,6 +44,10 @@ namespace Application.Command
 
                 return Result.Success(true);
             }
+            catch (Domain.Common.Exceptions.ServiceNameConflictException)
+            {
+                return Result.Failure<bool>(ServiceErrors.NameTaken);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error updating service {ServiceId}", request.Id);

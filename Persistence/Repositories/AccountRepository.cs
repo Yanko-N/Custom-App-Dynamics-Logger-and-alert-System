@@ -23,7 +23,7 @@ namespace Persistence.Repositories
 
             if (alreadyExists)
             {
-                throw new AccountAlreadyExistsException(name);
+                throw new AccountNameConflictException(name);
             }
 
             var newAccount = new Account
@@ -80,7 +80,7 @@ namespace Persistence.Repositories
 
             if (nameConflict)
             {
-                throw new AccountAlreadyExistsException(name);
+                throw new AccountNameConflictException(name);
             }
 
             account.Name = name;

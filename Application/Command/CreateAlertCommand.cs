@@ -70,6 +70,10 @@ namespace Application.Command
 
                 return Result.Success(alertId.Value);
             }
+            catch (Domain.Common.Exceptions.AlertNameConflictException)
+            {
+                return Result.Failure<int>(AlertErrors.NameTaken);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error creating alert for service {ServiceId}", request.ServiceId);

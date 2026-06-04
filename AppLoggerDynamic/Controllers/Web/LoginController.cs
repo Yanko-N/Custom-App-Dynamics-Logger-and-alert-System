@@ -17,7 +17,9 @@ namespace AppLoggerDynamic.Controllers.Web
         public IActionResult Index()
         {
             if (GetSessionAccountId() != null)
+            {
                 return RedirectToAction("Index", "Dashboard");
+            }
             return View();
         }
 

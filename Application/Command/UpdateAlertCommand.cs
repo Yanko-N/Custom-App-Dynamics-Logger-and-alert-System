@@ -72,6 +72,10 @@ namespace Application.Command
 
                 return Result.Success(true);
             }
+            catch (Domain.Common.Exceptions.AlertNameConflictException)
+            {
+                return Result.Failure<bool>(AlertErrors.NameTaken);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error updating alert {AlertId}", request.Id);

@@ -25,11 +25,7 @@ namespace AppLoggerDynamic.Controllers
 
         // GET api/log?serviceId=1&skip=0&take=50
         [HttpGet]
-        public async Task<IActionResult> GetLogs(
-            [FromQuery] int serviceId,
-            [FromQuery] int skip = 0,
-            [FromQuery] int take = 50,
-            CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetLogs([FromQuery] int serviceId,[FromQuery] int skip = 0, [FromQuery] int take = 50, CancellationToken cancellationToken = default)
         {
             var (_, authError) = await ResolveAccountFromApiKeyHeader(_apiKeyRepository, cancellationToken);
             if (authError != null)

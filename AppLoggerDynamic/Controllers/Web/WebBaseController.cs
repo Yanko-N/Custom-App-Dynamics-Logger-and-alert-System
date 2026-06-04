@@ -18,7 +18,9 @@ namespace AppLoggerDynamic.Controllers.Web
         protected IActionResult? RequireAuth()
         {
             if (GetSessionAccountId() == null)
+            {
                 return RedirectToAction("Index", "Login");
+            }
             return null;
         }
     }

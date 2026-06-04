@@ -1,3 +1,4 @@
+@using Domain.Common
 @model List<Domain.Entities.Service>
 @{
     ViewData["Title"] = "Dashboard";
@@ -26,13 +27,7 @@
         <div class="row g-3">
             @foreach (var svc in Model)
             {
-                var envClass = svc.Environment?.ToLower() switch
-                {
-                    "production" => "env-production",
-                    "staging" => "env-staging",
-                    "development" or "dev" => "env-development",
-                    _ => "env-default"
-                };
+                var envClass = EnvironmentClasses.GetClass(svc.Environment);
                 <div class="col-sm-6 col-lg-4 col-xl-3">
                     <div class="service-card">
                         <div class="d-flex align-items-start justify-content-between mb-2">

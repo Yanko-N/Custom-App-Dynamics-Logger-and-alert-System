@@ -1,3 +1,4 @@
+using Domain.Common.Exceptions;
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,14 @@ namespace Persistence.Repositories
             if (!accountExists)
             {
                 return null;
+            }
+
+            bool nameConflict = await _context.Services
+                .AnyAsync(s => s.AccountId == accountId && s.Name == name, cancellationToken);
+
+            if (nameConflict)
+            {
+                throw new ServiceNameConflictException(name);
             }
 
             var service = new Service
@@ -75,6 +84,14 @@ namespace Persistence.Repositories
             if (service == null)
             {
                 return false;
+            }
+
+            bool nameConflict = await _context.Services
+                .AnyAsync(s => s.AccountId == service.AccountId && s.Name == name && s.Id != id, cancellationToken);
+
+            if (nameConflict)
+            {
+                throw new ServiceNameConflictException(name);
             }
 
             service.Name = name;

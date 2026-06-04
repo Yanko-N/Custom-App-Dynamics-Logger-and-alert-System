@@ -1,3 +1,4 @@
+using Domain.Common.Exceptions;
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,14 @@ namespace Persistence.Repositories
             if (!accountExists)
             {
                 return null;
+            }
+
+            bool labelConflict = await _context.ApiKeys
+                .AnyAsync(k => k.AccountId == accountId && k.Label == label && k.IsActive, cancellationToken);
+
+            if (labelConflict)
+            {
+                throw new ApiKeyLabelConflictException(label);
             }
 
             var rawKeyBytes = RandomNumberGenerator.GetBytes(32);

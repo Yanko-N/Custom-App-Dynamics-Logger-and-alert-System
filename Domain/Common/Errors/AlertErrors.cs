@@ -11,6 +11,9 @@ namespace Domain.Common.Errors
         public static Error ServiceNotFound(int serviceId) =>
             Error.NotFound("Alert.ServiceNotFound", $"Service with id '{serviceId}' was not found.");
 
+        public static Error NameTaken =>
+            Error.Conflict("Alert.NameTaken", "An alert with this name already exists for this service.");
+
         public static Error InvalidName =>
             Error.BadRequest("Alert.InvalidName", "The alert name is invalid. It cannot be empty or whitespace.");
 

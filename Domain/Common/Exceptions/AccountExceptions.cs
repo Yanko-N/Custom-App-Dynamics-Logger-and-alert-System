@@ -1,18 +1,10 @@
 ﻿
 namespace Domain.Common.Exceptions
 {
-    public class AccountNotFoundException : Exception
+    public class AccountNameConflictException : Exception
     {
-        public AccountNotFoundException(int accountId)
-            : base($"Account with ID {accountId} was not found.")
-        {
-        }
-    }
-
-    public class AccountAlreadyExistsException : Exception
-    {
-        public AccountAlreadyExistsException(string accountName)
-            : base($"An account with the name '{accountName}' already exists.")
+        public AccountNameConflictException(string name)
+            : base($"An account with the name '{name}' already exists.")
         {
         }
     }

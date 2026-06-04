@@ -36,7 +36,7 @@ namespace Application.Command
 
                 return Result.Success(accountId.Value);
             }
-            catch (Domain.Common.Exceptions.AccountAlreadyExistsException)
+            catch (Domain.Common.Exceptions.AccountNameConflictException)
             {
                 return Result.Failure<int>(AccountErrors.NameTaken);
             }

@@ -75,20 +75,32 @@
             var violating = item.IsViolating && alert.IsActive;
             var inactive = !alert.IsActive;
 
-            var borderColor   = inactive ? "#dee2e6" : (violating ? "#dc3545" : "#198754");
-            var statusBg      = inactive ? "bg-secondary-subtle text-secondary"
+            var borderColor = inactive ? "#dee2e6" : (violating ? "#dc3545" : "#198754");
+            var statusBg = inactive ? "bg-secondary-subtle text-secondary"
                                          : (violating ? "bg-danger-subtle text-danger"
                                                       : "bg-success-subtle text-success");
-            var statusIcon    = inactive ? "bi-pause-circle" : (violating ? "bi-exclamation-triangle-fill" : "bi-check-circle-fill");
-            var statusLabel   = inactive ? "Inactive" : (violating ? "VIOLATION" : "Healthy");
+            var statusIcon = inactive ? "bi-pause-circle" : (violating ? "bi-exclamation-triangle-fill" : "bi-check-circle-fill");
+            var statusLabel = inactive ? "Inactive" : (violating ? "VIOLATION" : "Healthy");
 
-            var lvlBadge = alert.Level switch
+
+            string? lvlBadge = null;
+            switch (alert.Level)
             {
-                "ERROR" => "badge-error",
-                "WARN"  => "badge-warn",
-                "INFO"  => "badge-info",
-                "FATAL" => "badge-fatal",
-                _       => "badge-debug"
+                case "ERROR":
+                    lvlBadge = "badge-error";
+                    break;
+                case "WARN":
+                    lvlBadge = "badge-warn";
+                    break;
+                case "INFO":
+                    lvlBadge = "badge-info";
+                    break;
+                case "FATAL":
+                    lvlBadge = "badge-fatal";
+                    break;
+                default:
+                    lvlBadge = "badge-debug";
+                    break;
             };
 
             var barColor = violating ? "bg-danger" : "bg-success";

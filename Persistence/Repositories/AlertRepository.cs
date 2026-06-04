@@ -1,3 +1,4 @@
+using Domain.Common.Exceptions;
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,14 @@ namespace Persistence.Repositories
         {
             bool serviceExists = await _context.Services.AnyAsync(s => s.Id == serviceId, cancellationToken);
             if (!serviceExists) return null;
+
+            bool nameConflict = await _context.Alerts
+                .AnyAsync(a => a.ServiceId == serviceId && a.Name == name, cancellationToken);
+
+            if (nameConflict)
+            {
+                throw new AlertNameConflictException(name);
+            }
 
             var alert = new Alert
             {
@@ -81,6 +90,14 @@ namespace Persistence.Repositories
         {
             var alert = await _context.Alerts.FindAsync([id], cancellationToken);
             if (alert == null) return false;
+
+            bool nameConflict = await _context.Alerts
+                .AnyAsync(a => a.ServiceId == alert.ServiceId && a.Name == name && a.Id != id, cancellationToken);
+
+            if (nameConflict)
+            {
+                throw new AlertNameConflictException(name);
+            }
 
             alert.Name = name;
             alert.Level = level;
