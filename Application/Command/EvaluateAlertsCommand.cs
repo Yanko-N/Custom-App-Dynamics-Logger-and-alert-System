@@ -46,12 +46,16 @@ namespace Application.Command
                 {
                     // Skip if level doesn't match
                     if (!string.Equals(alert.Level, request.Level, StringComparison.OrdinalIgnoreCase))
+                    {
                         continue;
+                    }
 
                     // Skip if message pattern set but current message doesn't match
                     if (!string.IsNullOrWhiteSpace(alert.MessagePattern) &&
                         !request.Message.Contains(alert.MessagePattern, StringComparison.OrdinalIgnoreCase))
+                    {
                         continue;
+                    }
 
                     var windowStart = DateTime.UtcNow.AddSeconds(-alert.WindowSeconds);
                     var count = await _logsRepository.CountLogsInWindowAsync(
